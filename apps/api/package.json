@@ -1,0 +1,35 @@
+{
+  "name": "@qhph/api",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "start": "tsx src/main.ts",
+    "start:dev": "tsx watch src/main.ts",
+    "lint": "eslint .",
+    "test": "echo \"No tests yet (api)\"",
+    "build": "echo \"Build placeholder (api)\"",
+    "openapi:check": "node ./scripts/check-openapi.cjs",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate:dev": "prisma migrate dev",
+    "prisma:migrate:deploy": "prisma migrate deploy"
+  },
+  "dependencies": {
+    "@nestjs/jwt": "11.0.0",
+    "@qhph/observability": "workspace:*",
+    "@prisma/client": "6.5.0",
+    "@nestjs/common": "11.0.5",
+    "@nestjs/core": "11.0.5",
+    "@nestjs/platform-fastify": "11.0.5",
+    "bcryptjs": "2.4.3",
+    "fastify": "5.2.1",
+    "reflect-metadata": "0.2.2",
+    "rxjs": "7.8.2"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "2.4.6",
+    "@types/node": "22.13.10",
+    "prisma": "6.5.0",
+    "tsx": "4.19.3",
+    "typescript": "5.8.2"
+  }
+}

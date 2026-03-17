@@ -1,0 +1,254 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  user
+  organizer
+  moderator
+  admin
+}
+
+enum EventStatus {
+  draft
+  published
+  cancelled
+  finished
+}
+
+enum VerificationStatus {
+  unverified
+  verified_manual
+  trusted_source
+}
+
+enum NotificationChannel {
+  push
+  email
+}
+
+enum ReportStatus {
+  open
+  reviewing
+  resolved
+  dismissed
+}
+
+model User {
+  id                        String                   @id @db.Uuid
+  email                     String                   @unique @db.VarChar(255)
+  passwordHash              String                   @map("password_hash") @db.VarChar(255)
+  role                      Role                     @default(user)
+  cityId                    String?                  @map("city_id") @db.Uuid
+  timezone                  String                   @default("America/Bogota") @db.VarChar(64)
+  createdAt                 DateTime                 @default(now()) @map("created_at")
+  updatedAt                 DateTime                 @updatedAt @map("updated_at")
+  city                      City?                    @relation(fields: [cityId], references: [id])
+  interests                 UserInterest[]
+  bookmarks                 EventBookmark[]
+  notificationSubscriptions NotificationSubscription[]
+  reports                   EventReport[]
+  organizer                 Organizer?
+  auditLogs                 AuditLog[]
+
+  @@map("users")
+  @@index([cityId])
+}
+
+model City {
+  id          String      @id @db.Uuid
+  countryCode String      @map("country_code") @db.VarChar(2)
+  name        String      @db.VarChar(120)
+  slug        String      @unique @db.VarChar(120)
+  timezone    String      @db.VarChar(64)
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+  users       User[]
+  venues      Venue[]
+  events      Event[]
+
+  @@map("cities")
+  @@index([countryCode])
+}
+
+model EventCategory {
+  id          String         @id @db.Uuid
+  slug        String         @unique @db.VarChar(80)
+  name        String         @db.VarChar(80)
+  icon        String?        @db.VarChar(120)
+  createdAt   DateTime       @default(now()) @map("created_at")
+  updatedAt   DateTime       @updatedAt @map("updated_at")
+  interests   UserInterest[]
+  events      Event[]
+
+  @@map("event_categories")
+}
+
+model UserInterest {
+  userId     String        @map("user_id") @db.Uuid
+  categoryId String        @map("category_id") @db.Uuid
+  createdAt  DateTime      @default(now()) @map("created_at")
+  user       User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category   EventCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([userId, categoryId])
+  @@map("user_interests")
+}
+
+model Organizer {
+  id          String   @id @db.Uuid
+  userId      String   @unique @map("user_id") @db.Uuid
+  name        String   @db.VarChar(160)
+  slug        String   @unique @db.VarChar(160)
+  description String?  @db.Text
+  isVerified  Boolean  @default(false) @map("is_verified")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  events      Event[]
+
+  @@map("organizers")
+}
+
+model Venue {
+  id          String                           @id @db.Uuid
+  cityId      String                           @map("city_id") @db.Uuid
+  name        String                           @db.VarChar(180)
+  addressLine String                           @map("address_line") @db.VarChar(255)
+  location    Unsupported("geography(Point,4326)")
+  latitude    Decimal?                         @db.Decimal(9, 6)
+  longitude   Decimal?                         @db.Decimal(9, 6)
+  createdAt   DateTime                         @default(now()) @map("created_at")
+  updatedAt   DateTime                         @updatedAt @map("updated_at")
+  city        City                             @relation(fields: [cityId], references: [id])
+  events      Event[]
+
+  @@map("venues")
+  @@index([cityId])
+  @@index([cityId, latitude, longitude])
+}
+
+model Event {
+  id                 String             @id @db.Uuid
+  slug               String?            @unique @db.VarChar(220)
+  organizerId        String             @map("organizer_id") @db.Uuid
+  venueId            String             @map("venue_id") @db.Uuid
+  categoryId         String             @map("category_id") @db.Uuid
+  cityId             String             @map("city_id") @db.Uuid
+  countryCode        String             @map("country_code") @db.VarChar(2)
+  timezone           String             @db.VarChar(64)
+  title              String             @db.VarChar(220)
+  descriptionShort   String             @map("description_short") @db.VarChar(500)
+  descriptionLong    String?            @map("description_long") @db.Text
+  coverImageUrl      String             @map("cover_image_url") @db.VarChar(500)
+  ticketUrl          String?            @map("ticket_url") @db.VarChar(500)
+  priceMin           Decimal?           @map("price_min") @db.Decimal(12, 2)
+  priceMax           Decimal?           @map("price_max") @db.Decimal(12, 2)
+  startAt            DateTime           @map("start_at")
+  endAt              DateTime?          @map("end_at")
+  status             EventStatus        @default(draft)
+  verificationStatus VerificationStatus @default(unverified) @map("verification_status")
+  createdAt          DateTime           @default(now()) @map("created_at")
+  updatedAt          DateTime           @updatedAt @map("updated_at")
+  cancelledAt        DateTime?          @map("cancelled_at")
+  organizer          Organizer          @relation(fields: [organizerId], references: [id])
+  venue              Venue              @relation(fields: [venueId], references: [id])
+  category           EventCategory      @relation(fields: [categoryId], references: [id])
+  city               City               @relation(fields: [cityId], references: [id])
+  dates              EventDate[]
+  media              EventMedia[]
+  bookmarks          EventBookmark[]
+  reports            EventReport[]
+
+  @@map("events")
+  @@index([cityId, startAt])
+  @@index([status, startAt])
+  @@index([countryCode, cityId])
+}
+
+model EventDate {
+  id        String   @id @db.Uuid
+  eventId   String   @map("event_id") @db.Uuid
+  startsAt  DateTime @map("starts_at")
+  endsAt    DateTime @map("ends_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@map("event_dates")
+  @@index([eventId, startsAt])
+}
+
+model EventMedia {
+  id        String   @id @db.Uuid
+  eventId   String   @map("event_id") @db.Uuid
+  mediaUrl  String   @map("media_url") @db.VarChar(500)
+  mediaType String   @map("media_type") @db.VarChar(40)
+  createdAt DateTime @default(now()) @map("created_at")
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@map("event_media")
+  @@index([eventId])
+}
+
+model EventBookmark {
+  userId    String   @map("user_id") @db.Uuid
+  eventId   String   @map("event_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@id([userId, eventId])
+  @@map("event_bookmarks")
+  @@index([eventId])
+}
+
+model NotificationSubscription {
+  id        String              @id @db.Uuid
+  userId    String              @map("user_id") @db.Uuid
+  channel   NotificationChannel
+  target    String              @db.VarChar(255)
+  isEnabled Boolean             @default(true) @map("is_enabled")
+  createdAt DateTime            @default(now()) @map("created_at")
+  updatedAt DateTime            @updatedAt @map("updated_at")
+  user      User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notification_subscriptions")
+  @@index([userId, channel])
+}
+
+model EventReport {
+  id          String       @id @db.Uuid
+  eventId     String       @map("event_id") @db.Uuid
+  reporterId  String       @map("reporter_id") @db.Uuid
+  reason      String       @db.VarChar(255)
+  details     String?      @db.Text
+  status      ReportStatus @default(open)
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+  resolvedAt  DateTime?    @map("resolved_at")
+  event       Event        @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  reporter    User         @relation(fields: [reporterId], references: [id], onDelete: Cascade)
+
+  @@map("event_reports")
+  @@index([eventId, status])
+}
+
+model AuditLog {
+  id        String   @id @db.Uuid
+  actorId   String   @map("actor_id") @db.Uuid
+  action    String   @db.VarChar(80)
+  entity    String   @db.VarChar(80)
+  entityId  String   @map("entity_id") @db.Uuid
+  metadata  Json?
+  createdAt DateTime @default(now()) @map("created_at")
+  actor     User     @relation(fields: [actorId], references: [id], onDelete: Cascade)
+
+  @@map("audit_logs")
+  @@index([entity, entityId])
+  @@index([actorId, createdAt])
+}

@@ -1,0 +1,14 @@
+{
+  "expo": {
+    "name": "Que hay pa' hacer",
+    "slug": "que-hay-pa-hacer",
+    "scheme": "qhph",
+    "version": "0.1.0",
+    "newArchEnabled": true,
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "assetBundlePatterns": [
+      "**/*"
+    ]
+  }
+}

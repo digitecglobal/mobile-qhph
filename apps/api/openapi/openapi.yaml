@@ -1,0 +1,272 @@
+openapi: 3.0.3
+info:
+  title: Que hay pa' hacer API
+  version: 0.2.0
+  description: API contract for MVP mobile (Bogota)
+servers:
+  - url: http://localhost:3000
+paths:
+  /api/v1/health:
+    get:
+      tags: [health]
+      summary: Health check endpoint
+      operationId: getHealth
+      responses:
+        '200':
+          description: API health status
+
+  /api/v1/auth/register:
+    post:
+      tags: [auth]
+      summary: Register user
+      operationId: register
+      responses:
+        '201':
+          description: User registered
+
+  /api/v1/auth/login:
+    post:
+      tags: [auth]
+      summary: Login user
+      operationId: login
+      responses:
+        '201':
+          description: User logged in
+
+  /api/v1/auth/refresh:
+    post:
+      tags: [auth]
+      summary: Refresh tokens
+      operationId: refresh
+      responses:
+        '201':
+          description: Tokens refreshed
+
+  /api/v1/auth/me:
+    get:
+      tags: [auth]
+      summary: Current user
+      operationId: me
+      responses:
+        '200':
+          description: Current user profile
+
+  /api/v1/onboarding/options:
+    get:
+      tags: [onboarding]
+      summary: Get onboarding options (cities/categories/venues)
+      operationId: getOnboardingOptions
+      responses:
+        '200':
+          description: Onboarding catalog
+
+  /api/v1/me:
+    get:
+      tags: [me]
+      summary: Get current user profile
+      operationId: getMe
+      responses:
+        '200':
+          description: Current user profile data
+
+  /api/v1/me/onboarding:
+    post:
+      tags: [me]
+      summary: Save onboarding city and interests
+      operationId: saveOnboarding
+      responses:
+        '201':
+          description: Onboarding saved
+
+  /api/v1/me/bookmarks:
+    get:
+      tags: [bookmarks]
+      summary: List my bookmarks
+      operationId: listMyBookmarks
+      responses:
+        '200':
+          description: Bookmark list
+
+  /api/v1/events:
+    get:
+      tags: [events]
+      summary: Discovery feed with ranking and filters
+      operationId: listDiscoveryEvents
+      parameters:
+        - in: query
+          name: categories
+          schema:
+            type: string
+        - in: query
+          name: cityId
+          schema:
+            type: string
+        - in: query
+          name: dateFrom
+          schema:
+            type: string
+            format: date-time
+        - in: query
+          name: dateTo
+          schema:
+            type: string
+            format: date-time
+        - in: query
+          name: minPrice
+          schema:
+            type: number
+        - in: query
+          name: maxPrice
+          schema:
+            type: number
+        - in: query
+          name: radiusKm
+          schema:
+            type: number
+      responses:
+        '200':
+          description: Ranked feed
+
+  /api/v1/events/map:
+    get:
+      tags: [events]
+      summary: Map pins for discovery
+      operationId: getEventsMapPins
+      responses:
+        '200':
+          description: Event pins
+
+  /api/v1/events/{id}:
+    get:
+      tags: [events]
+      summary: Event detail
+      operationId: getEventById
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Event detail
+
+  /api/v1/events/{id}/bookmark:
+    post:
+      tags: [bookmarks]
+      summary: Bookmark event
+      operationId: bookmarkEvent
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '201':
+          description: Event bookmarked
+    delete:
+      tags: [bookmarks]
+      summary: Remove bookmark
+      operationId: unbookmarkEvent
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Event unbookmarked
+
+  /api/v1/events/{id}/report:
+    post:
+      tags: [reports]
+      summary: Report event
+      operationId: reportEvent
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '201':
+          description: Event reported
+
+  /api/v1/analytics/events:
+    post:
+      tags: [analytics]
+      summary: Track product analytics event
+      operationId: trackAnalyticsEvent
+      responses:
+        '201':
+          description: Event tracked
+
+  /api/v1/organizer/events:
+    get:
+      tags: [organizer]
+      summary: List organizer events
+      operationId: listOrganizerEvents
+      responses:
+        '200':
+          description: Organizer events
+    post:
+      tags: [organizer]
+      summary: Create organizer event
+      operationId: createOrganizerEvent
+      responses:
+        '201':
+          description: Event created
+
+  /api/v1/organizer/events/{id}:
+    get:
+      tags: [organizer]
+      summary: Get organizer event by id
+      operationId: getOrganizerEventById
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Organizer event
+    patch:
+      tags: [organizer]
+      summary: Update organizer event
+      operationId: updateOrganizerEvent
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Event updated
+
+  /api/v1/admin/reports:
+    get:
+      tags: [moderation]
+      summary: List event reports
+      operationId: listReports
+      responses:
+        '200':
+          description: Reports list
+
+  /api/v1/admin/reports/{id}:
+    patch:
+      tags: [moderation]
+      summary: Update report status
+      operationId: updateReportStatus
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Report updated
