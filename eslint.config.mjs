@@ -13,4 +13,16 @@ export default [
     ],
   },
   js.configs.recommended,
+  {
+    files: ['**/*.cjs'],
+    languageOptions: {
+      globals: {
+        __dirname: 'readonly',
+        console: 'readonly',
+        module: 'readonly',
+        process: 'readonly',
+        require: 'readonly',
+      },
+    },
+  },
 ];
