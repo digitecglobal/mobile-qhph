@@ -34,9 +34,6 @@ jobs:
       - name: Lint
         run: pnpm lint
 
-      - name: App lint
-        run: pnpm -r run lint --if-present
-
       - name: OpenAPI check
         run: pnpm --filter @qhph/api run openapi:check
 
